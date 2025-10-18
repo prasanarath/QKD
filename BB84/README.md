@@ -1,4 +1,6 @@
 # BB84 Quantum Key Distribution - Interactive Model
+<img width="1859" height="965" alt="image" src="https://github.com/user-attachments/assets/38e868fa-f095-44a2-86b7-23809bcd4cfc" />
+<img width="1907" height="983" alt="image" src="https://github.com/user-attachments/assets/63408e97-4c37-4451-9151-dccf12f8fc5f" />
 
 🔑 An interactive, educational webpage that explains the BB84 quantum key distribution protocol through engaging dropdown sections, interactive simulations, and visual demonstrations.
 
@@ -211,3 +213,4 @@ This project is open source and available under the [MIT License](LICENSE).
 **Happy Learning! 🎓**
 
 Explore the fascinating world of quantum cryptography and discover how the laws of quantum mechanics can create unbreakable security!
+
