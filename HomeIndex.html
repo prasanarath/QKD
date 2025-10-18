@@ -1,0 +1,1587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BB84 Protocol — Interactive Simulator</title>
+
+  <!-- GSAP for smooth animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    :root{
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --muted: #97a0b3;
+      --glass: rgba(255,255,255,0.04);
+      --success: #10b981;
+      --danger: #ef4444;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071028 0%, #071a2e 100%);color:#e6eef8}
+    .wrap{max-width:1100px;margin:28px auto;padding:22px}
+
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    header h1{font-size:20px;margin:0;display:flex;gap:10px;align-items:center}
+    header p{color:var(--muted);margin:0;font-size:13px}
+
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:18px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:16px;box-shadow:0 6px 20px rgba(2,6,23,0.6);}
+
+    /* Left column controls */
+    .controls .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .controls button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+    .controls button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;color:#061226}
+    .controls .toggle{display:flex;gap:8px;align-items:center}
+    .toggle input{accent-color:var(--accent)}
+
+    /* Manual input styling */
+    .manual-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .manual-row label{min-width:100px;font-size:13px;color:var(--muted)}
+    .manual-row input,.manual-row select{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:6px 8px;border-radius:6px;color:inherit;font-size:12px}
+    .manual-row input:focus,.manual-row select:focus{outline:none;border-color:var(--accent)}
+    
+    /* Compare button styling */
+    .compare-btn{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;padding:8px 12px;border-radius:8px;color:#061226;cursor:pointer;font-weight:600;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(124,58,237,0.3)}
+    .compare-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(124,58,237,0.4)}
+    .compare-btn:active{transform:translateY(0)}
+
+    /* Visual stage */
+    .stage{position:relative;height:420px;overflow:hidden}
+    .participant{position:absolute;top:40px;width:150px;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .alice{left:18px}
+    .bob{right:18px}
+    .eve{left:calc(50% - 75px);top:220px}
+
+    .avatar{width:90px;height:90px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#061226;box-shadow:0 8px 26px rgba(12,8,32,0.6)}
+    .label{font-size:13px;color:var(--muted)}
+
+    /* fiber path */
+    .fiber{position:absolute;left:190px;right:190px;height:4px;top:120px;background:linear-gradient(90deg,#16324a,#0b2130);border-radius:4px;box-shadow:0 2px 8px rgba(2,8,20,0.6)}
+    .fiber::after{content:'';position:absolute;left:0;right:0;top:-10px;height:24px;border-radius:12px;box-shadow:inset 0 0 30px rgba(124,58,237,0.08)}
+
+    /* photon */
+    .photon{position:absolute;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#061226;background:linear-gradient(135deg,#fff,#f0f5ff);box-shadow:0 8px 22px rgba(12,8,32,0.4);}
+    .arrow{font-size:18px}
+
+    /* bits & bases bars */
+    .bars{display:flex;gap:8px;flex-wrap:wrap;min-height:50px;align-items:flex-start;padding:4px;align-content:flex-start}
+    .bar{background:var(--glass);padding:10px 12px;border-radius:8px;min-width:44px;text-align:center;font-size:13px;margin-bottom:6px;flex-shrink:0;box-sizing:border-box;border:1px solid rgba(255,255,255,0.05);height:fit-content}
+    .bar.match{border:1px solid rgba(16,185,129,0.2);box-shadow:0 6px 18px rgba(16,185,129,0.04)}
+    .bar.mismatch{border:1px solid rgba(239,68,68,0.12)}
+
+    /* Improved table layout for sequences */
+    .sequence-section{margin-bottom:20px}
+    .sequence-section:last-child{margin-bottom:0}
+    .sequence-title{font-weight:600;margin-bottom:10px;color:#e6eef8;font-size:14px;display:flex;align-items:center;gap:8px}
+    .sequence-title::before{content:'';width:4px;height:16px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:2px}
+    .sequence-container{background:rgba(255,255,255,0.02);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+
+    /* Comprehensive Results Table Styling */
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px}
+    .result-section{background:rgba(255,255,255,0.02);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.04)}
+    .result-title{font-weight:600;margin-bottom:12px;font-size:14px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .result-content{display:flex;flex-direction:column;gap:8px}
+    .result-row{display:flex;gap:8px;align-items:flex-start}
+    .result-label{min-width:80px;font-size:12px;color:var(--muted);font-weight:500}
+    .result-bits,.result-bases{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .result-bits .bit,.result-bases .base{background:rgba(255,255,255,0.05);padding:6px 8px;border-radius:6px;font-size:11px;font-weight:600;min-width:24px;text-align:center;border:1px solid rgba(255,255,255,0.08)}
+    .result-basis-matches .bit,.result-basis-matches .base{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4)}
+    .result-discarded .bit,.result-discarded .base{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4)}
+    .final-key-bits{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .final-key-bits .key-bit{background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(6,182,212,0.3));padding:8px 12px;border-radius:8px;font-weight:700;font-size:14px;border:1px solid rgba(124,58,237,0.4);box-shadow:0 4px 12px rgba(124,58,237,0.2)}
+    
+    /* Color coding for participants */
+    .alice-color{color:#3b82f6;border-bottom-color:#3b82f6}
+    .bob-color{color:#10b981;border-bottom-color:#10b981}
+    .eve-color{color:#ef4444;border-bottom-color:#ef4444}
+    
+    /* Enhanced tooltips and hover effects */
+    .bit,.base,.key-bit{transition:all 0.2s ease;cursor:pointer}
+    .bit:hover,.base:hover,.key-bit:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+    
+    /* Responsive improvements for results table */
+    @media (max-width:768px){
+      .results-grid{grid-template-columns:1fr}
+      .result-section{padding:12px}
+      .result-row{flex-direction:column;gap:4px}
+      .result-label{min-width:auto}
+    }
+
+    footer.stats{display:flex;gap:12px;align-items:center;margin-top:12px}
+    .chip{background:rgba(255,255,255,0.02);padding:8px 12px;border-radius:999px;font-size:13px;border:1px solid rgba(255,255,255,0.03)}
+
+    /* Key area */
+    .keybox{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .keybox .key{background:linear-gradient(90deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px 12px;border-radius:8px;font-weight:600}
+
+    /* Final key display */
+    .final-key-section{background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(6,182,212,0.1));border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:16px;margin-top:16px}
+    .final-key-title{font-size:16px;font-weight:600;margin-bottom:12px;color:#e6eef8}
+    .final-key-display{display:flex;gap:8px;flex-wrap:wrap;min-height:50px;align-items:center}
+    .final-key-display .key{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(6,182,212,0.2));padding:12px 16px;border-radius:10px;font-weight:700;font-size:16px;color:#e6eef8;border:1px solid rgba(124,58,237,0.3);box-shadow:0 4px 12px rgba(124,58,237,0.1)}
+
+    /* Comparison animation */
+    .comparison-animation{position:absolute;top:280px;left:50%;transform:translateX(-50%);width:300px;height:80px;display:flex;align-items:center;justify-content:space-between;opacity:0}
+    .comparison-item{width:120px;text-align:center}
+    .comparison-arrow{font-size:24px;color:var(--accent);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+
+    /* Eve interception display - Card Style UI */
+    .eve-interception{position:absolute;top:180px;left:50%;transform:translateX(-50%);width:450px;min-height:220px;background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.08));border:2px solid rgba(239,68,68,0.5);border-radius:20px;padding:24px;opacity:0;display:none;box-shadow:0 12px 40px rgba(239,68,68,0.25),inset 0 1px 0 rgba(255,255,255,0.1)}
+    
+    .eve-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;justify-content:center}
+    .eve-icon{font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))}
+    .eve-title{font-size:18px;font-weight:700;color:#ef4444;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+    
+    .eve-mini-table{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;background:rgba(255,255,255,0.95);border-radius:12px;padding:16px;border:1px solid rgba(239,68,68,0.2)}
+    .eve-table-row{display:flex;align-items:center;gap:16px}
+    .eve-table-label{min-width:120px;font-size:14px;font-weight:700;color:#ef4444;text-align:right}
+    .eve-table-data{display:flex;gap:6px;flex-wrap:wrap;font-family:'Courier New',monospace;font-size:15px;font-weight:600;color:#1f2937;background:rgba(255,255,255,0.9);padding:8px 12px;border-radius:10px;border:1px solid rgba(239,68,68,0.3);min-height:40px;align-items:center;justify-content:center;min-width:220px}
+    
+    /* Individual sequence items styling */
+    .eve-table-data span{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);transition:all 0.2s ease;font-weight:700}
+    .eve-table-data span:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(239,68,68,0.3)}
+    .eve-table-data span.error{background:rgba(239,68,68,0.3);border-color:rgba(239,68,68,0.6);color:#dc2626}
+    .eve-table-data span.placeholder{background:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.5);color:rgba(0,0,0,0.5)}
+    
+    .eve-summary{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid rgba(239,68,68,0.2)}
+    .eve-summary-item{display:flex;align-items:center;gap:10px;font-size:14px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1)}
+    .eve-summary-item.success{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4)}
+    .eve-summary-item.error{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4)}
+    .eve-summary-icon{font-size:18px}
+    .eve-summary-text{color:#e6eef8;font-weight:600}
+    .eve-summary-text strong{color:#ffffff}
+
+    /* Comparison results - positioned in right corner below steps/bits */
+    .comparison-results{position:absolute;bottom:60px;right:18px;width:280px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;opacity:0;display:none}
+    .comparison-section{margin-bottom:12px}
+    .comparison-section:last-child{margin-bottom:0}
+    .comparison-section-title{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+    .comparison-content{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .comparison-item{background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:4px;font-size:11px;min-width:20px;text-align:center}
+    .comparison-item.correct{background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3)}
+    .comparison-item.incorrect{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3)}
+
+    /* Enhanced Basis Comparison */
+    .bases-comparison{position:absolute;top:320px;left:50%;transform:translateX(-50%);width:500px;min-height:280px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;opacity:0;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+    
+    .bases-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .bases-title{font-size:16px;font-weight:600;color:#e6eef8;margin:0}
+    .bases-toggle{display:flex;align-items:center;gap:8px}
+    .bases-toggle label{font-size:13px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:color 0.2s ease}
+    .bases-toggle label:hover{color:#e6eef8}
+    .bases-toggle input{accent-color:var(--accent);cursor:pointer}
+    
+    .bases-comparison-table{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+    .comparison-row{display:flex;align-items:center;gap:16px}
+    .comparison-label{min-width:100px;font-size:13px;font-weight:600;color:var(--muted);text-align:right}
+    .comparison-data{display:flex;gap:6px;flex-wrap:wrap;font-family:'Courier New',monospace;font-size:14px;font-weight:600;min-height:32px;align-items:center;justify-content:flex-start;min-width:300px}
+    
+    /* Comparison data cells */
+    .comparison-data span{display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:6px;font-weight:700;transition:all 0.2s ease;border:1px solid transparent}
+    .comparison-data span:hover{transform:scale(1.1);box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+    
+    /* Cell states */
+    .comparison-data span.match{background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.5);color:#10b981}
+    .comparison-data span.error{background:rgba(239,68,68,0.3);border-color:rgba(239,68,68,0.5);color:#ef4444}
+    .comparison-data span.discarded{background:rgba(156,163,175,0.2);border-color:rgba(156,163,175,0.4);color:#9ca3af}
+    
+    /* Final key row styling */
+    .final-key-row .comparison-label{color:#e6eef8;font-weight:700}
+    .final-key-data span{background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(6,182,212,0.3));border-color:rgba(124,58,237,0.5);color:#e6eef8;min-width:30px;height:30px;line-height:30px;font-size:15px}
+    
+    .bases-summary{display:flex;gap:12px;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)}
+    .summary-item{display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)}
+    .summary-item.match{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3)}
+    .summary-item.error{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3)}
+    .summary-item.discarded{background:rgba(156,163,175,0.15);border-color:rgba(156,163,175,0.3)}
+    .summary-icon{font-size:16px}
+    .summary-text{color:var(--muted);font-weight:500}
+    .summary-text strong{color:#e6eef8}
+    
+    /* Modal styling */
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:1000;backdrop-filter:blur(4px)}
+    .modal-content{background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:0;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+    
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:24px 24px 16px 24px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .modal-header h3{margin:0;color:#e6eef8;font-size:18px;font-weight:600}
+    .modal-close{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:4px;border-radius:4px;transition:all 0.2s ease;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{color:#e6eef8;background:rgba(255,255,255,0.1)}
+    
+    .modal-body{padding:24px}
+    .comparison-table{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+    .comparison-row{display:flex;align-items:center;gap:16px}
+    .comparison-label{min-width:120px;font-size:14px;font-weight:600;color:var(--muted);text-align:right}
+    .comparison-data{display:flex;gap:8px;flex-wrap:wrap;font-family:'Courier New',monospace;font-size:15px;font-weight:600;min-height:36px;align-items:center;justify-content:flex-start;min-width:350px}
+    
+    .comparison-data span{display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;border-radius:8px;font-weight:700;transition:all 0.2s ease;border:1px solid transparent}
+    .comparison-data span:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+    .comparison-data span.match{background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.5);color:#10b981}
+    .comparison-data span.error{background:rgba(239,68,68,0.3);border-color:rgba(239,68,68,0.5);color:#ef4444}
+    .comparison-data span.discarded{background:rgba(156,163,175,0.2);border-color:rgba(156,163,175,0.4);color:#9ca3af}
+    
+    /* Additional visual indicators */
+    .comparison-data span.sampled{position:relative}
+    .comparison-data span.sampled::after{content:'📊';position:absolute;top:-8px;right:-8px;font-size:10px;background:rgba(124,58,237,0.9);color:white;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+    .comparison-data span.eve-interference{position:relative}
+    .comparison-data span.eve-interference::after{content:'👁️';position:absolute;top:-8px;right:-8px;font-size:10px;background:rgba(239,68,68,0.9);color:white;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+    
+    .final-key-row .comparison-label{color:#e6eef8;font-weight:700}
+    .final-key-data span{background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(6,182,212,0.3));border-color:rgba(124,58,237,0.5);color:#e6eef8;min-width:32px;height:32px;line-height:32px;font-size:16px}
+    
+    .comparison-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1)}
+    .summary-item{display:flex;align-items:center;gap:10px;font-size:14px;padding:12px 16px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)}
+    .summary-item.match{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3)}
+    .summary-item.error{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3)}
+    .summary-item.discarded{background:rgba(156,163,175,0.15);border-color:rgba(156,163,175,0.3)}
+    .summary-item.qber{background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.3)}
+    .summary-icon{font-size:18px}
+    .summary-text{color:var(--muted);font-weight:500}
+    .summary-text strong{color:#e6eef8}
+    .qber-info{color:rgba(124,58,237,0.8);font-size:14px;cursor:help;margin-left:4px}
+
+    /* small responsive */
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr;}
+      .alice,.bob{position:relative;left:unset;right:unset;top:10px;}
+      .fiber{display:none}
+      .stage{height:520px}
+      .bars{gap:6px}
+      .bar{min-width:40px;padding:8px 10px;font-size:12px}
+      .sequence-container{padding:12px}
+      
+      /* Eve interception responsive */
+      .eve-interception{width:90%;max-width:450px;left:5%;transform:none}
+      .eve-table-row{flex-direction:column;gap:8px;align-items:flex-start}
+      .eve-table-label{min-width:auto;text-align:left}
+      .eve-table-data{justify-content:flex-start;min-height:auto}
+      
+      /* Modal responsive */
+      .modal-content{width:95%;max-width:500px}
+      .comparison-row{flex-direction:column;gap:8px;align-items:flex-start}
+      .comparison-label{min-width:auto;text-align:left}
+      .comparison-data{justify-content:flex-start;min-width:auto}
+      .comparison-summary{grid-template-columns:1fr}
+    }
+    
+    @media (max-width:480px){
+      .bars{gap:4px}
+      .bar{min-width:36px;padding:6px 8px;font-size:11px}
+      .sequence-container{padding:10px}
+      .sequence-title{font-size:13px}
+      
+      /* Eve interception mobile */
+      .eve-interception{width:95%;padding:16px}
+      .eve-header{flex-direction:column;gap:8px}
+      .eve-title{font-size:14px}
+      .eve-table-data{font-size:12px;padding:6px 8px;gap:6px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1><i class="fa-solid fa-phone-flip" style="transform:rotate(90deg)"></i> BB84 Interactive Simulator</h1>
+        <p>Visual demonstration of quantum key distribution protocol with step-by-step animation.</p>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <div class="chip">Quantum Cryptography</div>
+        <button id="btn-know-more" class="primary" style="font-size:12px;padding:6px 12px;border-radius:6px;">
+          <i class="fa-solid fa-info-circle"></i> Know More About BB84
+        </button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card controls">
+        <h3 style="margin-top:0">Controls</h3>
+        <div class="row">
+          <button id="btn-random" class="primary">Generate Random Sequence</button>
+          <button id="btn-reset">Reset</button>
+        </div>
+
+        <div class="row">
+          <button id="btn-step">Next Step ▶</button>
+          <button id="btn-play">Play ▶</button>
+        </div>
+
+        <div class="row toggle">
+          <label><input type="checkbox" id="toggle-eve"> Simulate with Eve</label>
+        </div>
+
+        <div class="row toggle">
+          <label><input type="checkbox" id="toggle-manual"> Manual Input Mode</label>
+        </div>
+
+        <div id="manual-inputs" style="display: none;">
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+          <h4 style="margin:6px 0">Manual Input</h4>
+          
+          <div class="manual-row">
+            <label>Number of Qubits:</label>
+            <select id="qubit-count">
+              <option value="8"style="color:black">8</option>
+              <option value="16"style="color:black">16</option>
+              <option value="32"style="color:black">32</option>
+            </select>
+          </div>
+
+          <div class="manual-row">
+            <label>Alice Bits:</label>
+            <input type="text" id="manual-alice-bits" placeholder="e.g., 10100110" maxlength="32">
+          </div>
+
+          <div class="manual-row">
+            <label>Alice Bases:</label>
+            <input type="text" id="manual-alice-bases" placeholder="e.g., +x+x++x" maxlength="32">
+          </div>
+
+          <div class="manual-row">
+            <label>Bob Bases:</label>
+            <input type="text" id="manual-bob-bases" placeholder="e.g., x++x+x+" maxlength="32">
+          </div>
+
+          <div class="manual-row">
+            <button id="btn-apply-manual" class="primary">Apply Manual Input</button>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+        <h4 style="margin:6px 0">Sequences</h4>
+        
+        <div class="sequence-section">
+          <div class="sequence-title">Alice bits</div>
+          <div class="sequence-container">
+        <div id="alice-bits" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="sequence-section">
+          <div class="sequence-title">Alice bases</div>
+          <div class="sequence-container">
+        <div id="alice-bases" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="sequence-section">
+          <div class="sequence-title">Bob bases</div>
+          <div class="sequence-container">
+        <div id="bob-bases" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="sequence-section">
+          <div class="sequence-title">Measurement results (Bob)</div>
+          <div class="sequence-container">
+        <div id="bob-results" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="chip">QBER: <span id="qber">0%</span></div>
+          <div class="chip">Sifted Key Length: <span id="sifted">0</span></div>
+        </div>
+
+        <div class="final-key-section">
+          <div class="final-key-title">Final Shared Key</div>
+          <div id="final-key-display" class="final-key-display">
+            <div style="color:var(--muted);font-style:italic">Generate and run protocol to see the key</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <div class="stage" id="stage">
+
+          <div class="participant alice">
+            <div class="avatar">A</div>
+            <div class="label">Alice — Sender</div>
+          </div>
+
+          <div class="participant bob">
+            <div class="avatar">B</div>
+            <div class="label">Bob — Receiver</div>
+          </div>
+
+          <div class="participant eve">
+            <div class="avatar" style="background:linear-gradient(135deg,#fb7185,#f97316);">E</div>
+            <div class="label">Eve — Eavesdropper</div>
+          </div>
+
+          <div class="fiber" aria-hidden="true"></div>
+
+          <!-- photons go here -->
+          <div id="photon-layer"></div>
+
+          <!-- Eve interception display -->
+          <div class="eve-interception" id="eve-interception">
+            <div class="eve-header">
+              <div class="eve-icon">👁️</div>
+            <div class="eve-title">Eve's Eavesdropping Process</div>
+              </div>
+            
+            <div class="eve-mini-table">
+              <div class="eve-table-row">
+                <div class="eve-table-label">Eve's Basis:</div>
+                <div class="eve-table-data" id="eve-basis-sequence"></div>
+              </div>
+              <div class="eve-table-row">
+                <div class="eve-table-label">Eve's Measurements:</div>
+                <div class="eve-table-data" id="eve-measurement-sequence"></div>
+              </div>
+              <div class="eve-table-row">
+                <div class="eve-table-label">Eve's Resent:</div>
+                <div class="eve-table-data" id="eve-resend-sequence"></div>
+            </div>
+            </div>
+            
+            <div class="eve-summary" id="eve-summary">
+              <div class="eve-summary-item success">
+                <span class="eve-summary-icon">✅</span>
+                <span class="eve-summary-text">Successfully intercepted: <strong id="eve-success-count">0</strong> bits</span>
+              </div>
+              <div class="eve-summary-item error">
+                <span class="eve-summary-icon">❌</span>
+                <span class="eve-summary-text">Errors introduced: <strong id="eve-error-count">0</strong> bits</span>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+        </div>
+
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="color:var(--muted);font-size:13px">Status: <strong id="status">Idle</strong></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="chip">Step: <span id="step-num">0</span></div>
+            <div class="chip">Bits: <span id="bits-count">8</span></div>
+            <div class="chip">Bases: <span id="bases-count">8</span></div>
+            <button id="btn-compare" class="compare-btn" title="Compare Bases & Final Key">
+              <span style="font-size:16px">📊</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Basis Comparison Popup Modal -->
+        <div id="comparison-modal" class="modal-overlay">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Basis Comparison & Final Key</h3>
+              <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+              <div class="comparison-table">
+                <div class="comparison-row">
+                  <div class="comparison-label">Alice's Bases:</div>
+                  <div class="comparison-data" id="modal-alice-bases"></div>
+                </div>
+                <div class="comparison-row">
+                  <div class="comparison-label">Bob's Bases:</div>
+                  <div class="comparison-data" id="modal-bob-bases"></div>
+                </div>
+                <div class="comparison-row">
+                  <div class="comparison-label">Alice's Bits:</div>
+                  <div class="comparison-data" id="modal-alice-bits"></div>
+                </div>
+                <div class="comparison-row">
+                  <div class="comparison-label">Bob's Results:</div>
+                  <div class="comparison-data" id="modal-bob-results"></div>
+                </div>
+                <div class="comparison-row final-key-row">
+                  <div class="comparison-label">Final Key:</div>
+                  <div class="comparison-data final-key-data" id="modal-final-key"></div>
+                </div>
+              </div>
+              
+              <div class="comparison-summary">
+                <div class="summary-item match">
+                  <span class="summary-icon">✅</span>
+                  <span class="summary-text">Basis Matches: <strong id="modal-match-count">0</strong></span>
+                </div>
+                <div class="summary-item error">
+                  <span class="summary-icon">❌</span>
+                  <span class="summary-text">Errors: <strong id="modal-error-count">0</strong></span>
+                </div>
+                <div class="summary-item discarded">
+                  <span class="summary-icon">⚪</span>
+                  <span class="summary-text">Discarded: <strong id="modal-discarded-count">0</strong></span>
+                </div>
+                <div class="summary-item qber">
+                  <span class="summary-icon">📊</span>
+                  <span class="summary-text">QBER: <strong id="modal-qber" title="QBER based on sampled bits">0.00%</strong></span>
+                  <span class="qber-info" title="QBER is calculated from a randomly selected subset of matched bases">ⓘ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Step Information -->
+        <div id="current-step-info" style="margin-top:12px;padding:12px;background:rgba(124,58,237,0.1);border-radius:8px;border:1px solid rgba(124,58,237,0.2);display:none">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Current Step Details:</div>
+          <div id="step-details" style="font-size:14px;color:#e6eef8"></div>
+        </div>
+
+        <!-- Comprehensive Results Table -->
+        <div id="results-table" style="margin-top:20px;display:none">
+          <h4 style="margin:0 0 16px 0;color:#e6eef8">Protocol Results</h4>
+          
+          <div class="results-grid">
+            <!-- Alice's Data -->
+            <div class="result-section">
+              <div class="result-title alice-color">Alice's Data</div>
+              <div class="result-content">
+                <div class="result-row">
+                  <span class="result-label">Bits:</span>
+                  <div id="results-alice-bits" class="result-bits"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Bases:</span>
+                  <div id="results-alice-bases" class="result-bases"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Eve's Data (if enabled) -->
+            <div class="result-section" id="eve-results-section" style="display:none">
+              <div class="result-title eve-color">Eve's Interference</div>
+              <div class="result-content">
+                <div class="result-row">
+                  <span class="result-label">Bases:</span>
+                  <div id="results-eve-bases" class="result-bases"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Measurements:</span>
+                  <div id="results-eve-measurements" class="result-bits"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Resent:</span>
+                  <div id="results-eve-resent" class="result-bits"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bob's Data -->
+            <div class="result-section">
+              <div class="result-title bob-color">Bob's Data</div>
+              <div class="result-content">
+                <div class="result-row">
+                  <span class="result-label">Bases:</span>
+                  <div id="results-bob-bases" class="result-bases"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Measurements:</span>
+                  <div id="results-bob-measurements" class="result-bits"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Basis Comparison -->
+            <div class="result-section">
+              <div class="result-title">Basis Comparison</div>
+              <div class="result-content">
+                <div class="result-row">
+                  <span class="result-label">Matches:</span>
+                  <div id="results-basis-matches" class="result-basis-matches"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Discarded:</span>
+                  <div id="results-discarded" class="result-discarded"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Final Key -->
+            <div class="result-section final-key-section">
+              <div class="result-title">Final Shared Key</div>
+              <div class="result-content">
+                <div class="result-row">
+                  <span class="result-label">Key Length:</span>
+                  <span id="final-key-length">0</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Key:</span>
+                  <div id="final-key-display-results" class="final-key-bits"></div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">QBER:</span>
+                  <span id="final-qber">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Results Button -->
+          <div style="margin-top:16px;text-align:center">
+            <button id="btn-download" class="primary" style="display:none">Download Results (CSV)</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <footer style="max-width:1100px;margin:18px auto;display:flex;gap:12px;align-items:center;justify-content:space-between">
+      <div style="color:var(--muted);font-size:13px">Use "Generate" then Play or Step to animate. Toggle Eve to show eavesdropping effects.</div>
+      <div style="display:flex;gap:8px">
+        <div class="chip">BB84 Protocol</div>
+        <div class="chip">Quantum Key Distribution</div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // ========= Parameters =========
+    let N = 8; // number of qubits (changeable)
+    let aliceBits = [];
+    let aliceBases = [];
+    let bobBases = [];
+    let bobResults = [];
+    let eveBases = [];
+    let eveMeasurements = [];
+    let eveResent = [];
+    let step = 0;
+    let timeline = null;
+    let playing = false;
+
+    // DOM refs
+    const aliceBitsDiv = document.getElementById('alice-bits');
+    const aliceBasesDiv = document.getElementById('alice-bases');
+    const bobBasesDiv = document.getElementById('bob-bases');
+    const bobResultsDiv = document.getElementById('bob-results');
+    const finalKeyDisplay = document.getElementById('final-key-display');
+    const qberSpan = document.getElementById('qber');
+    const siftedSpan = document.getElementById('sifted');
+    const statusEl = document.getElementById('status');
+    const stepNumEl = document.getElementById('step-num');
+    const bitsCountEl = document.getElementById('bits-count');
+    const basesCountEl = document.getElementById('bases-count');
+    const photonLayer = document.getElementById('photon-layer');
+    const comparisonResults = document.getElementById('comparison-results');
+    const aliceKeyDisplay = document.getElementById('alice-key-display');
+    const bobKeyDisplay = document.getElementById('bob-key-display');
+    const basesComparison = document.getElementById('bases-comparison');
+    const aliceBasesDisplay = document.getElementById('alice-bases-display');
+    const bobBasesDisplay = document.getElementById('bob-bases-display');
+    const eveInterception = document.getElementById('eve-interception');
+    const eveBasis = document.getElementById('eve-basis');
+    const eveMeasurement = document.getElementById('eve-measurement');
+    const eveResend = document.getElementById('eve-resend');
+    const eveResult = document.getElementById('eve-result');
+
+
+    // Controls
+    document.getElementById('btn-random').addEventListener('click',()=>{resetAll();generateRandom();renderAll();});
+    document.getElementById('btn-reset').addEventListener('click',()=>{resetAll();});
+    document.getElementById('btn-step').addEventListener('click',stepOnce);
+    document.getElementById('btn-play').addEventListener('click',playToggle);
+    document.getElementById('btn-know-more').addEventListener('click',()=>{window.location.href='bb84/index.html';});
+    
+    // Manual input controls
+    document.getElementById('toggle-manual').addEventListener('change', toggleManualInput);
+    document.getElementById('btn-apply-manual').addEventListener('click', applyManualInput);
+    document.getElementById('qubit-count').addEventListener('change', updateQubitCount);
+    document.getElementById('btn-download').addEventListener('click', downloadResults);
+    
+    // Eve toggle control
+    document.getElementById('toggle-eve').addEventListener('change', toggleEve);
+    
+
+    
+    // Modal controls
+    document.getElementById('btn-compare').addEventListener('click', openComparisonModal);
+    document.getElementById('modal-close').addEventListener('click', closeComparisonModal);
+
+    // init
+    resetAll();
+    generateRandom();
+    renderAll();
+
+    function resetAll(){
+      aliceBits = new Array(N).fill(0);
+      aliceBases = new Array(N).fill('+');
+      bobBases = new Array(N).fill('+');
+      bobResults = new Array(N).fill(null);
+      eveBases = new Array(N).fill(undefined);
+      eveMeasurements = new Array(N).fill(undefined);
+      eveResent = new Array(N).fill(undefined);
+      step = 0;
+      playing = false;
+      
+      photonLayer.innerHTML = '';
+      finalKeyDisplay.innerHTML = '<div style="color:var(--muted);font-style:italic">Generate and run protocol to see the key</div>';
+      qberSpan.textContent = '0%';
+      siftedSpan.textContent = '0';
+      statusEl.textContent = 'Idle';
+      stepNumEl.textContent = '0';
+      bitsCountEl.textContent = N;
+      basesCountEl.textContent = N;
+      
+      document.getElementById('toggle-eve').checked = false;
+      document.getElementById('toggle-manual').checked = false;
+      
+      clearTimeline();
+      renderAll();
+      hideCurrentStepInfo();
+      
+      eveInterception.style.display = 'none';
+      eveInterception.style.opacity = '0';
+      
+      // Reset Eve's display sequences
+      document.getElementById('eve-basis-sequence').innerHTML = '';
+      document.getElementById('eve-measurement-sequence').innerHTML = '';
+      document.getElementById('eve-resend-sequence').innerHTML = '';
+      document.getElementById('eve-success-count').textContent = '0';
+      document.getElementById('eve-error-count').textContent = '0';
+      
+      // Hide modal if open
+      document.getElementById('comparison-modal').style.display = 'none';
+      document.getElementById('results-table').style.display = 'none';
+      document.getElementById('btn-download').style.display = 'none';
+    }
+
+    function generateRandom(){
+      for(let i=0;i<N;i++){
+        // Generate Alice's bits: 0 or 1 with uniform randomness
+        aliceBits[i] = Math.random() < 0.5 ? 0 : 1;
+        
+        // Generate Alice's bases: + or × with uniform randomness
+        aliceBases[i] = Math.random() < 0.5 ? '+' : '×';
+        
+        // Generate Bob's bases: + or × with uniform randomness
+        bobBases[i] = Math.random() < 0.5 ? '+' : '×';
+        
+        // Reset Bob's results
+        bobResults[i] = null;
+      }
+      
+      // Reset Eve's data
+      eveBases = new Array(N).fill(undefined);
+      eveMeasurements = new Array(N).fill(undefined);
+      eveResent = new Array(N).fill(undefined);
+    }
+
+    function renderAll(){
+      aliceBitsDiv.innerHTML='';aliceBasesDiv.innerHTML='';bobBasesDiv.innerHTML='';bobResultsDiv.innerHTML='';
+      for(let i=0;i<N;i++){
+        aliceBitsDiv.appendChild(makeBar(aliceBits[i]+'', 'bit'));
+        aliceBasesDiv.appendChild(makeBar(aliceBases[i], 'base'));
+        bobBasesDiv.appendChild(makeBar(bobBases[i], 'base'));
+        bobResultsDiv.appendChild(makeBar(bobResults[i]===null?'-':bobResults[i]+'', 'result'));
+      }
+      updateStats();
+    }
+
+    function makeBar(text,type){
+      const d=document.createElement('div');d.className='bar';d.textContent=text;d.dataset.type=type;return d;
+    }
+
+    function stepOnce(){
+      if(step>=N){statusEl.textContent='Completed';return}
+      statusEl.textContent=`Encoding qubit ${step+1}`;
+      stepNumEl.textContent=step+1;
+      // Hide previous step info before showing new one
+      hideCurrentStepInfo();
+      animateQubit(step).then(()=>{
+        // after animation, advance step
+        step++;
+        if(step===N){statusEl.textContent='Transmission complete — sifting...';hideCurrentStepInfo();setTimeout(siftAndDisplay,1000);}else{statusEl.textContent='Paused';}
+        // Update step info after measurement is complete
+        updateCurrentStepInfo(step-1);
+      });
+    }
+
+    function playToggle(){
+      playing = !playing;
+      const btn = document.getElementById('btn-play');
+      btn.textContent = playing ? 'Pause ⏸' : 'Play ▶';
+      if(playing) autoPlay();
+    }
+
+    async function autoPlay(){
+      while(playing && step < N){
+        await animateQubit(step);
+        // Update step info AFTER measurement is complete
+        updateCurrentStepInfo(step);
+        step++;
+        stepNumEl.textContent=step;
+        if(step>=N){
+          playing=false;
+          document.getElementById('btn-play').textContent='Play ▶';
+          statusEl.textContent='Transmission complete — sifting...';
+          hideCurrentStepInfo();
+          setTimeout(siftAndDisplay,1000);
+          break;
+        }
+        await new Promise(r=>setTimeout(r,500));
+      }
+    }
+
+    function clearTimeline(){if(timeline){timeline.kill();timeline=null}}
+
+    // Animate a single qubit from Alice -> (Eve?) -> Bob
+    function animateQubit(index){
+      return new Promise((resolve)=>{
+        // create photon node
+        const p = document.createElement('div');p.className='photon';p.id='photon-'+index;
+        // display basis arrow and bit label inside photon
+        const arrow = basisToArrow(aliceBases[index], aliceBits[index]);
+        p.innerHTML = `<div style='display:flex;flex-direction:column;align-items:center'><div class='arrow'>${arrow.symbol}</div><div style='font-size:11px;margin-top:2px'>${aliceBits[index]}</div></div>`;
+        // position at alice
+        const stageRect = document.getElementById('stage').getBoundingClientRect();
+        const aliceEl = document.querySelector('.alice .avatar');
+        const bobEl = document.querySelector('.bob .avatar');
+        const aliceRect = aliceEl.getBoundingClientRect();
+        const bobRect = bobEl.getBoundingClientRect();
+
+        // relative positions inside stage
+        const stageLeft = stageRect.left; const stageTop = stageRect.top;
+        const startX = aliceRect.left - stageLeft + aliceRect.width/2;
+        const y = 120 - 18; // align along fiber
+        p.style.left = (startX - 18) + 'px'; p.style.top = y + 'px';
+        photonLayer.appendChild(p);
+
+        // timeline: move to middle, optionally to Eve, then to Bob
+        const midX = (stageRect.width/2) - 18;
+        const endX = bobRect.left - stageLeft - 36 + bobRect.width/2;
+
+        const tl = gsap.timeline({onComplete:()=>{
+          // compute measurement
+          const eveOn = document.getElementById('toggle-eve').checked;
+          let measured;
+                  if(eveOn){
+          // Eve measures with a random basis, then resends -> may introduce error
+          const eveBasis = Math.random()<0.5?'+':'×';
+          eveBases[index] = eveBasis;
+          // measurement at Eve: if bases match, she gets the correct bit; else she gets random
+          const eveGets = (eveBasis===aliceBases[index]) ? aliceBits[index] : (Math.random()<0.5?0:1);
+          eveMeasurements[index] = eveGets;
+          // she resends encoded qubit according to her basis
+          // Bob measures according to his basis
+          measured = (bobBases[index]===eveBasis) ? eveGets : (Math.random()<0.5?0:1);
+          eveResent[index] = measured;
+          // show warning indicator on that bar
+          const br = bobResultsDiv.children[index];
+          if(br) br.classList.add('mismatch');
+          
+          // Eve display will be updated after animation completes
+          } else {
+            // direct transmission — Bob measures according to his basis
+            measured = (bobBases[index]===aliceBases[index]) ? aliceBits[index] : (Math.random()<0.5?0:1);
+            const br = bobResultsDiv.children[index];
+            if(br) br.classList.toggle('match', bobBases[index]===aliceBases[index]);
+          }
+          bobResults[index]=measured;
+          
+          // Update only the specific result bar instead of re-rendering everything
+          const resultBar = bobResultsDiv.children[index];
+          if(resultBar) {
+            resultBar.textContent = measured;
+            resultBar.dataset.type = 'result';
+          }
+          
+          // Update Eve's display if enabled (after animation completes)
+          if(eveOn) {
+            setTimeout(() => updateEveDisplay(), 50);
+          }
+          
+          // remove photon after short delay
+          setTimeout(()=>{p.remove();resolve();},350);
+        }});
+
+        // go to middle
+        tl.to(p,{duration:0.7,x:midX - (startX - 18),ease:'power2.inOut'});
+        
+        // Check if Eve is enabled and animate to Eve
+        if(document.getElementById('toggle-eve').checked){
+          // Show Eve's interception display
+          eveInterception.style.display = 'block';
+          gsap.to(eveInterception, {opacity: 1, duration: 0.5});
+          
+          // Move down to Eve's position
+          tl.to(p,{duration:0.4,y:'+=80',ease:'power1.inOut'})
+            .to(p,{duration:0.3,scale:1.2,ease:'power1.inOut'}) // Eve "intercepts" the photon
+            .to(p,{duration:0.3,scale:1,ease:'power1.inOut'})
+            .to(p,{duration:0.4,y:'-=80',ease:'power1.inOut'}); // Return to fiber level
+        }
+        
+        // Continue to Bob
+        tl.to(p,{duration:0.9,x:endX - (startX - 18),ease:'power2.inOut'});
+      });
+      
+    }
+
+    function basisToArrow(basis, bit){
+      // picks a symbol representing polarization/basis
+      if(basis === '+'){
+        // rectilinear: 0 -> →, 1 -> ↑
+        return {symbol: bit==0 ? '→' : '↑'};
+      } else {
+        // diagonal: 0 -> ↗, 1 -> ↘ (visual)
+        return {symbol: bit==0 ? '↗' : '↘'};
+      }
+    }
+
+    function siftAndDisplay(){
+      // compare bases and keep matching
+      const siftedKey = [];
+      let errors=0; let matched=0;
+      
+      for(let i=0;i<N;i++){
+        const match = aliceBases[i]===bobBases[i];
+        const barAlice = aliceBasesDiv.children[i];
+        const barBob = bobBasesDiv.children[i];
+        if(match){
+          matched++;
+          // show match highlight
+          barAlice.classList.add('match'); barBob.classList.add('match');
+          // ensure bobResults[i] exists
+          if(bobResults[i]===null){
+            // if some measurement missing (shouldn't) simulate
+            bobResults[i] = Math.random()<0.5?0:1;
+          }
+          
+          // Add to final key (all matched bases)
+          siftedKey.push(bobResults[i]);
+        } else {
+          barAlice.classList.add('mismatch'); barBob.classList.add('mismatch');
+        }
+        // error counting: when match but bit differs -> error introduced by Eve
+        if(match && bobResults[i]!==aliceBits[i]) errors++;
+      }
+
+      // compute QBER
+      const qberData = calculateQBER(matched, errors);
+      qberSpan.textContent = qberData.qber + '%';
+      qberSpan.title = `QBER: ${qberData.qber}% (${errors} errors in ${matched} matched bases)`;
+      siftedSpan.textContent = siftedKey.length;
+
+      // show final key prominently on the left side
+      finalKeyDisplay.innerHTML='';
+      if(siftedKey.length===0){
+        finalKeyDisplay.innerHTML='<div style="color:var(--muted)">No matching bases — increase N or try again.</div>';
+      } else {
+        // Create a more prominent key display
+        const keyTitle = document.createElement('div');
+        keyTitle.style.fontSize = '14px';
+        keyTitle.style.color = 'var(--muted)';
+        keyTitle.style.marginBottom = '8px';
+        keyTitle.textContent = `Final Shared Key (${siftedKey.length} bits):`;
+        finalKeyDisplay.appendChild(keyTitle);
+        
+        const keyContainer = document.createElement('div');
+        keyContainer.style.display = 'flex';
+        keyContainer.style.gap = '6px';
+        keyContainer.style.flexWrap = 'wrap';
+        
+        siftedKey.forEach((k, index) => {
+          const d = document.createElement('div');
+          d.className = 'key';
+          d.textContent = k;
+          d.style.background = 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(6,182,212,0.3))';
+          d.style.border = '1px solid rgba(124,58,237,0.4)';
+          d.style.boxShadow = '0 4px 12px rgba(124,58,237,0.2)';
+          keyContainer.appendChild(d);
+        });
+        
+        finalKeyDisplay.appendChild(keyContainer);
+      }
+
+      // also update bob results visuals
+      renderAll();
+      statusEl.textContent='Sifting done — key produced';
+      
+      // Show comprehensive results table
+      showComprehensiveResults(siftedKey, errors, matched);
+      
+      // Show elements sequentially instead of all at once
+      setTimeout(() => {
+        // Show Eve's results if enabled
+        if(document.getElementById('toggle-eve').checked){
+          setTimeout(() => {
+            showEveResults(siftedKey, errors, matched);
+          }, 1000);
+        }
+      }, 500);
+    }
+
+    function showEveResults(siftedKey, errors, matched) {
+      // Update Eve's result display
+      const eveOn = document.getElementById('toggle-eve').checked;
+      if(eveOn) {
+        // Update summary counts
+        document.getElementById('eve-success-count').textContent = matched;
+        document.getElementById('eve-error-count').textContent = errors;
+        
+        // Update Eve's display with final sequences
+        updateEveDisplay();
+      }
+    }
+
+    function updateEveDisplay() {
+      const eveBasisSequence = document.getElementById('eve-basis-sequence');
+      const eveMeasurementSequence = document.getElementById('eve-measurement-sequence');
+      const eveResendSequence = document.getElementById('eve-resend-sequence');
+      
+      // Safety check: ensure DOM elements exist
+      if (!eveBasisSequence || !eveMeasurementSequence || !eveResendSequence) {
+        console.warn('Eve display elements not found, skipping update');
+        return;
+      }
+      
+      // Safety check: ensure arrays are properly initialized
+      if (!eveBases || eveBases.length !== N) {
+        eveBases = new Array(N).fill(undefined);
+        eveMeasurements = new Array(N).fill(undefined);
+        eveResent = new Array(N).fill(undefined);
+      }
+      
+      // Clear previous content
+      eveBasisSequence.innerHTML = '';
+      eveMeasurementSequence.innerHTML = '';
+      eveResendSequence.innerHTML = '';
+      
+      // Populate with current data
+      for (let i = 0; i < N; i++) {
+        if (eveBases[i] !== undefined) {
+          // Eve's basis
+          const basisSpan = document.createElement('span');
+          basisSpan.textContent = eveBases[i];
+          eveBasisSequence.appendChild(basisSpan);
+          
+          // Eve's measurement
+          const measurementSpan = document.createElement('span');
+          measurementSpan.textContent = eveMeasurements[i];
+          eveMeasurementSequence.appendChild(measurementSpan);
+          
+          // Eve's resent bit
+          const resendSpan = document.createElement('span');
+          resendSpan.textContent = eveResent[i];
+          
+          // Check if this bit introduces an error (Eve's resent doesn't match Alice's original)
+          if (eveResent[i] !== aliceBits[i]) {
+            resendSpan.classList.add('error');
+          }
+          
+          eveResendSequence.appendChild(resendSpan);
+        } else {
+          // Add placeholder for incomplete sequences
+          const placeholderSpan = document.createElement('span');
+          placeholderSpan.textContent = '?';
+          placeholderSpan.classList.add('placeholder');
+          
+          eveBasisSequence.appendChild(placeholderSpan.cloneNode(true));
+          eveMeasurementSequence.appendChild(placeholderSpan.cloneNode(true));
+          eveResendSequence.appendChild(placeholderSpan.cloneNode(true));
+        }
+      }
+    }
+
+    function showComprehensiveResults(siftedKey, errors, matched) {
+      const resultsTable = document.getElementById('results-table');
+      const eveResultsSection = document.getElementById('eve-results-section');
+      
+      // Show/hide Eve's section based on toggle
+      eveResultsSection.style.display = document.getElementById('toggle-eve').checked ? 'block' : 'none';
+      
+      // Populate Alice's data
+      populateResultSection('results-alice-bits', aliceBits, 'bit');
+      populateResultSection('results-alice-bases', aliceBases, 'base');
+      
+      // Populate Bob's data
+      populateResultSection('results-bob-bases', bobBases, 'base');
+      populateResultSection('results-bob-measurements', bobResults, 'bit');
+      
+      // Populate Eve's data if enabled
+      if (document.getElementById('toggle-eve').checked) {
+        populateResultSection('results-eve-bases', eveBases, 'base');
+        populateResultSection('results-eve-measurements', eveMeasurements, 'bit');
+        populateResultSection('results-eve-resent', eveResent, 'bit');
+      }
+      
+      // Populate basis comparison
+      populateBasisComparison();
+      
+      // Populate final key
+      document.getElementById('final-key-length').textContent = siftedKey.length;
+      populateFinalKey(siftedKey);
+      const qberData = calculateQBER(siftedKey.length, errors);
+      document.getElementById('final-qber').textContent = qberData.qber + '%';
+      document.getElementById('final-qber').title = `QBER: ${qberData.qber}% (${errors} errors in ${siftedKey.length} matched bases)`;
+      
+      // Show table and download button
+      resultsTable.style.display = 'block';
+      document.getElementById('btn-download').style.display = 'block';
+      
+      // Animate in
+      gsap.fromTo(resultsTable, 
+        { opacity: 0, y: 20 }, 
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }
+      );
+    }
+
+    function populateResultSection(elementId, data, type) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = '';
+      
+      data.forEach((item, index) => {
+        const span = document.createElement('span');
+        span.className = type;
+        span.textContent = item;
+        span.title = `${type === 'bit' ? 'Bit' : 'Basis'} ${index + 1}: ${item}`;
+        element.appendChild(span);
+      });
+    }
+
+    function populateBasisComparison() {
+      const matchesElement = document.getElementById('results-basis-matches');
+      const discardedElement = document.getElementById('results-discarded');
+      
+      matchesElement.innerHTML = '';
+      discardedElement.innerHTML = '';
+      
+      for (let i = 0; i < N; i++) {
+        const span = document.createElement('span');
+        span.className = 'base';
+        span.textContent = aliceBases[i];
+        
+        if (aliceBases[i] === bobBases[i]) {
+          span.classList.add('correct');
+          span.title = `Basis match at position ${i + 1}`;
+          matchesElement.appendChild(span);
+        } else {
+          span.classList.add('incorrect');
+          span.title = `Basis mismatch at position ${i + 1}`;
+          discardedElement.appendChild(span);
+        }
+      }
+    }
+
+    function populateFinalKey(siftedKey) {
+      const finalKeyElement = document.getElementById('final-key-display-results');
+      finalKeyElement.innerHTML = '';
+      
+      siftedKey.forEach((bit, index) => {
+        const span = document.createElement('span');
+        span.className = 'key-bit';
+        span.textContent = bit;
+        span.title = `Final key bit ${index + 1}: ${bit}`;
+        finalKeyElement.appendChild(span);
+      });
+    }
+
+    function updateCurrentStepInfo(stepIndex) {
+      const currentStepInfo = document.getElementById('current-step-info');
+      const stepDetails = document.getElementById('step-details');
+      
+      const aliceBit = aliceBits[stepIndex];
+      const aliceBasis = aliceBases[stepIndex];
+      const bobBasis = bobBases[stepIndex];
+      const eveOn = document.getElementById('toggle-eve').checked;
+      
+      let details = `Alice sends photon (bit=${aliceBit}, basis=${aliceBasis})`;
+      
+      // Only show Eve's interference if she's enabled AND has actually interfered
+      if (eveOn && eveBases[stepIndex] !== undefined) {
+        const eveBasis = eveBases[stepIndex];
+        const eveMeasurement = eveMeasurements[stepIndex];
+        const eveResent = eveResent[stepIndex];
+        
+        if (eveBasis) {
+          const eveError = eveResent !== aliceBit;
+          details += ` → Eve intercepts photon (basis=${eveBasis}, measures=${eveMeasurement})`;
+          
+          if (eveError) {
+            details += ` → Error introduced (resent=${eveResent})`;
+          } else {
+            details += ` → No error (resent=${eveResent})`;
+          }
+        }
+      }
+      
+      details += ` → Bob measures photon (basis=${bobBasis}`;
+      
+      if (bobResults[stepIndex] !== undefined) {
+        details += `, result=${bobResults[stepIndex]}`;
+      }
+      
+      details += `)`;
+      
+      if (aliceBasis === bobBasis) {
+        if (bobResults[stepIndex] !== undefined) {
+          if (bobResults[stepIndex] === aliceBit) {
+            details += ` → ✓ Basis match (${aliceBasis}), bit match (${aliceBit}=${bobResults[stepIndex]}) - bit kept`;
+          } else {
+            // Only mention Eve interference if she's actually enabled
+            if (eveOn) {
+              details += ` → ✓ Basis match (${aliceBasis}), ❌ bit mismatch (${aliceBit}≠${bobResults[stepIndex]}) - Eve interference`;
+            } else {
+              details += ` → ✓ Basis match (${aliceBasis}), ❌ bit mismatch (${aliceBit}≠${bobResults[stepIndex]})`;
+            }
+          }
+        } else {
+          details += ` → ✓ Basis match (${aliceBasis}) - bit will be kept`;
+        }
+      } else {
+        details += ` → ⚪ Basis mismatch (${aliceBasis}≠${bobBasis}) - bit will be discarded`;
+      }
+      
+
+      
+      stepDetails.textContent = details;
+      currentStepInfo.style.display = 'block';
+      
+      // Animate in
+      gsap.fromTo(currentStepInfo, 
+        { opacity: 0, y: -10 }, 
+        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+      );
+    }
+
+    function hideCurrentStepInfo() {
+      const currentStepInfo = document.getElementById('current-step-info');
+      gsap.to(currentStepInfo, { opacity: 0, y: -10, duration:0.3, ease: 'power2.in' });
+    }
+
+    function toggleEve() {
+      const eveOn = document.getElementById('toggle-eve').checked;
+      const eveInterception = document.getElementById('eve-interception');
+      
+      if (eveOn) {
+        // Show Eve's interception display
+        eveInterception.style.display = 'block';
+        gsap.to(eveInterception, { opacity: 1, duration: 0.5 });
+        
+        // Always ensure Eve's arrays are properly initialized
+        eveBases = new Array(N).fill(undefined);
+        eveMeasurements = new Array(N).fill(undefined);
+        eveResent = new Array(N).fill(undefined);
+        
+        // Update display
+        updateEveDisplay();
+      } else {
+        // Hide Eve's interception display
+        gsap.to(eveInterception, { opacity: 0, duration: 0.3, onComplete: () => {
+          eveInterception.style.display = 'none';
+        }});
+      }
+    }
+
+
+
+    function openComparisonModal() {
+      const modal = document.getElementById('comparison-modal');
+      modal.style.display = 'flex';
+      
+      // Populate modal with current data
+      populateModalComparison();
+      
+      // Animate in
+      gsap.fromTo(modal.querySelector('.modal-content'), 
+        { opacity: 0, scale: 0.9, y: 20 }, 
+        { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+      );
+    }
+
+    function closeComparisonModal() {
+      const modal = document.getElementById('comparison-modal');
+      gsap.to(modal.querySelector('.modal-content'), {
+        opacity: 0,
+        scale: 0.9,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          modal.style.display = 'none';
+        }
+      });
+    }
+
+    function populateModalComparison() {
+      const aliceBasesEl = document.getElementById('modal-alice-bases');
+      const bobBasesEl = document.getElementById('modal-bob-bases');
+      const aliceBitsEl = document.getElementById('modal-alice-bits');
+      const bobResultsEl = document.getElementById('modal-bob-results');
+      const finalKeyEl = document.getElementById('modal-final-key');
+      
+      // Clear previous content
+      aliceBasesEl.innerHTML = '';
+      bobBasesEl.innerHTML = '';
+      aliceBitsEl.innerHTML = '';
+      bobResultsEl.innerHTML = '';
+      finalKeyEl.innerHTML = '';
+      
+      let matchCount = 0;
+      let errorCount = 0;
+      let discardedCount = 0;
+      const finalKey = [];
+      const eveEnabled = document.getElementById('toggle-eve').checked;
+      
+      for (let i = 0; i < N; i++) {
+        const basesMatch = aliceBases[i] === bobBases[i];
+        
+        // Alice's base
+        const aliceBaseSpan = document.createElement('span');
+        aliceBaseSpan.textContent = aliceBases[i];
+        aliceBasesEl.appendChild(aliceBaseSpan);
+        
+        // Bob's base
+        const bobBaseSpan = document.createElement('span');
+        bobBaseSpan.textContent = bobBases[i];
+        bobBasesEl.appendChild(bobBaseSpan);
+        
+        // Alice's bit
+        const aliceBitSpan = document.createElement('span');
+        aliceBitSpan.textContent = aliceBits[i];
+        aliceBitsEl.appendChild(aliceBitSpan);
+        
+        // Bob's result
+        const bobResultSpan = document.createElement('span');
+        bobResultSpan.textContent = bobResults[i] || '?';
+        bobResultsEl.appendChild(bobResultSpan);
+        
+        if (basesMatch) {
+          matchCount++;
+          
+          // Check if bits match (no Eve error) or mismatch (Eve error)
+          if (bobResults[i] === aliceBits[i]) {
+            aliceBaseSpan.classList.add('match');
+            bobBaseSpan.classList.add('match');
+            aliceBitSpan.classList.add('match');
+            bobResultSpan.classList.add('match');
+            
+            // Add to final key
+            finalKey.push(bobResults[i]);
+          } else {
+            aliceBaseSpan.classList.add('error');
+            bobBaseSpan.classList.add('error');
+            aliceBitSpan.classList.add('error');
+            bobResultSpan.classList.add('error');
+            errorCount++;
+            
+            // Add Eve influence indicator
+            if (eveEnabled) {
+              aliceBaseSpan.title = 'Eve interference detected';
+              bobBaseSpan.title = 'Eve interference detected';
+              aliceBitSpan.title = 'Eve interference detected';
+              bobResultSpan.title = 'Eve interference detected';
+              aliceBaseSpan.classList.add('eve-interference');
+              bobBaseSpan.classList.add('eve-interference');
+              aliceBitSpan.classList.add('eve-interference');
+              bobResultSpan.classList.add('eve-interference');
+            }
+            
+            // Still add to final key even if there's an error
+            finalKey.push(bobResults[i]);
+          }
+        } else {
+          discardedCount++;
+          aliceBaseSpan.classList.add('discarded');
+          bobBaseSpan.classList.add('discarded');
+          aliceBitSpan.classList.add('discarded');
+          bobResultSpan.classList.add('discarded');
+        }
+      }
+      
+      // Populate final key
+      finalKey.forEach(bit => {
+        const keySpan = document.createElement('span');
+        keySpan.textContent = bit;
+        keySpan.title = 'Final key bit (excludes QBER sample)';
+        finalKeyEl.appendChild(keySpan);
+      });
+      
+      // Update summary counts
+      document.getElementById('modal-match-count').textContent = matchCount;
+      document.getElementById('modal-error-count').textContent = errorCount;
+      document.getElementById('modal-discarded-count').textContent = discardedCount;
+      
+      // Calculate and display QBER
+      const finalQberData = calculateQBER(matchCount, errorCount);
+      document.getElementById('modal-qber').textContent = finalQberData.qber + '%';
+      document.getElementById('modal-qber').title = `QBER: ${finalQberData.qber}% (${errorCount} errors in ${matchCount} matched bases)`;
+    }
+
+    function calculateQBER(matchCount, errorCount) {
+      if (matchCount === 0) return { qber: '0.00', sampleSize: 0, totalMatched: 0 };
+      
+      const eveEnabled = document.getElementById('toggle-eve').checked;
+      if (!eveEnabled) return { qber: '0.00', sampleSize: 0, totalMatched: matchCount };
+      
+      // Use a subset of matched bases for QBER calculation (sample 50% of matched bases)
+      const sampleSize = Math.max(1, Math.floor(matchCount * 0.5));
+      
+      // Count actual errors in matched bases
+      let actualErrors = 0;
+      for (let i = 0; i < N; i++) {
+        if (aliceBases[i] === bobBases[i] && bobResults[i] !== null) {
+          if (bobResults[i] !== aliceBits[i]) {
+            actualErrors++;
+          }
+        }
+      }
+      
+      // Calculate QBER based on actual errors vs total matched
+      const qberValue = (actualErrors / matchCount) * 100;
+      return {
+        qber: qberValue.toFixed(2),
+        sampleSize: sampleSize,
+        totalMatched: matchCount
+      };
+    }
+
+    function getRandomSampleIndices(totalSize, sampleSize) {
+      const indices = Array.from({length: totalSize}, (_, i) => i);
+      const sample = [];
+      
+      for (let i = 0; i < sampleSize; i++) {
+        const randomIndex = Math.floor(Math.random() * indices.length);
+        sample.push(indices[randomIndex]);
+        indices.splice(randomIndex, 1);
+      }
+      
+      return sample.sort((a, b) => a - b);
+    }
+
+
+
+    
+
+
+
+    // small helper to update stats
+    function updateStats(){
+      // mark matched bars visually
+      for(let i=0;i<N;i++){
+        const a = aliceBasesDiv.children[i]; const b=bobBasesDiv.children[i];
+        if(!a || !b) continue;
+        a.classList.remove('match','mismatch'); b.classList.remove('match','mismatch');
+      }
+    }
+
+    // Manual input functions
+    function toggleManualInput() {
+      const manualInputs = document.getElementById('manual-inputs');
+      const isChecked = document.getElementById('toggle-manual').checked;
+      manualInputs.style.display = isChecked ? 'block' : 'none';
+      
+      if (isChecked) {
+        // Pre-fill with current values
+        document.getElementById('manual-alice-bits').value = aliceBits.join('');
+        document.getElementById('manual-alice-bases').value = aliceBases.join('');
+        document.getElementById('manual-bob-bases').value = bobBases.join('');
+        document.getElementById('qubit-count').value = N;
+      }
+    }
+
+    function updateQubitCount() {
+      const newN = parseInt(document.getElementById('qubit-count').value);
+      if (newN >= 4 && newN <= 32) {
+        N = newN;
+        bitsCountEl.textContent = N;
+        basesCountEl.textContent = N;
+        resetAll();
+      }
+    }
+
+    function applyManualInput() {
+      const aliceBitsInput = document.getElementById('manual-alice-bits').value;
+      const aliceBasesInput = document.getElementById('manual-alice-bases').value;
+      const bobBasesInput = document.getElementById('manual-bob-bases').value;
+      
+      // Validate inputs
+      if (aliceBitsInput.length !== N || aliceBasesInput.length !== N || bobBasesInput.length !== N) {
+        alert(`Please enter exactly ${N} characters for each field.`);
+        return;
+      }
+      
+      // Parse inputs
+      aliceBits = aliceBitsInput.split('').map(bit => parseInt(bit));
+      aliceBases = aliceBasesInput.split('').map(basis => basis === '+' ? '+' : '×');
+      bobBases = bobBasesInput.split('').map(basis => basis === '+' ? '+' : '×');
+      
+      // Reset results
+      bobResults = new Array(N).fill(null);
+      eveBases = new Array(N).fill(undefined);
+      eveMeasurements = new Array(N).fill(undefined);
+      eveResent = new Array(N).fill(undefined);
+      step = 0;
+      
+      // Update display
+      renderAll();
+      statusEl.textContent = 'Manual input applied - ready to run';
+      stepNumEl.textContent = '0';
+    }
+
+    function downloadResults() {
+      const csvContent = generateCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bb84_results_${N}qubits.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    function generateCSV() {
+      const headers = ['Index', 'Alice_Bit', 'Alice_Basis', 'Bob_Basis', 'Basis_Match', 'Bob_Result', 'Final_Key'];
+      if (document.getElementById('toggle-eve').checked) {
+        headers.splice(4, 0, 'Eve_Basis', 'Eve_Measurement', 'Eve_Resent');
+      }
+      
+      let csv = headers.join(',') + '\n';
+      
+      for (let i = 0; i < N; i++) {
+        const row = [
+          i + 1,
+          aliceBits[i],
+          aliceBases[i],
+          bobBases[i]
+        ];
+        
+        if (document.getElementById('toggle-eve').checked) {
+          row.push(eveBases[i] || '', eveMeasurements[i] || '', eveResent[i] || '');
+        }
+        
+        const basisMatch = aliceBases[i] === bobBases[i];
+        row.push(basisMatch ? 'Yes' : 'No');
+        row.push(bobResults[i] || '');
+        row.push(basisMatch ? (bobResults[i] || '') : '');
+        
+        csv += row.join(',') + '\n';
+      }
+      
+      return csv;
+    }
+
+    // keyboard friendly: space = step
+    window.addEventListener('keydown', (e)=>{if(e.code==='Space'){e.preventDefault();stepOnce()}});
+
+    // accessibility: allow changing N by clicking bits chip (small demo)
+    bitsCountEl.parentElement.addEventListener('click',()=>{
+      const newN = parseInt(prompt('Enter number of qubits (4-32):', N)) || N;
+      if(newN>=4 && newN<=32){
+        N = newN;
+        bitsCountEl.textContent = N;
+        basesCountEl.textContent = N;
+        resetAll();
+        generateRandom();
+        renderAll();
+      }
+    });
+
+  </script>
+</body>
+</html>

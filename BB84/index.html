@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BB84 Quantum Key Distribution - Interactive Model</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>🔑 BB84 Quantum Key Distribution</h1>
+            <p class="subtitle">Interactive Model for Quantum Cryptography</p>
+            <p class="description">Explore the revolutionary quantum key distribution protocol developed by Bennett & Brassard in 1984</p>
+        </header>
+
+        <main class="content">
+            <!-- Section 1: Introduction to Quantum Cryptography -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">🔐</span>
+                    <span class="title">Introduction to Quantum Cryptography</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>What is Quantum Cryptography?</h3>
+                        <p>Quantum cryptography is a method of secure communication that uses quantum mechanical properties to ensure the security of cryptographic keys. Unlike classical cryptography, which relies on mathematical complexity, quantum cryptography is based on the fundamental laws of physics.</p>
+                        
+                        <h3>Classical vs. Quantum Cryptography</h3>
+                        <div class="comparison">
+                            <div class="classical">
+                                <h4>🔒 Classical Cryptography</h4>
+                                <ul>
+                                    <li>Based on mathematical complexity</li>
+                                    <li>Security depends on computational difficulty</li>
+                                    <li>Vulnerable to quantum computers</li>
+                                    <li>Examples: RSA, ECC, AES</li>
+                                </ul>
+                            </div>
+                            <div class="quantum">
+                                <h4>⚛️ Quantum Cryptography</h4>
+                                <ul>
+                                    <li>Based on physical laws of nature</li>
+                                    <li>Security guaranteed by quantum mechanics</li>
+                                    <li>Unconditionally secure against any attack</li>
+                                    <li>Examples: BB84, E91, BBM92</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <h3>Why Security Using Quantum Principles?</h3>
+                        <p>Quantum mechanics provides several key advantages:</p>
+                        <ul>
+                            <li><strong>No-Cloning Theorem:</strong> Quantum states cannot be perfectly copied</li>
+                            <li><strong>Measurement Disturbance:</strong> Measuring a quantum state changes it</li>
+                            <li><strong>Uncertainty Principle:</strong> Certain properties cannot be simultaneously known</li>
+                            <li><strong>Entanglement:</strong> Particles can be correlated in ways impossible classically</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: BB84 Protocol Basics -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">🛰️</span>
+                    <span class="title">The BB84 Protocol Basics</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Historical Background</h3>
+                        <p>The BB84 protocol was developed by <strong>Charles Bennett</strong> and <strong>Gilles Brassard</strong> in 1984, marking the birth of quantum key distribution (QKD). It was the first practical protocol to demonstrate the potential of quantum mechanics for secure communication.</p>
+                        
+                        <h3>Core Concept</h3>
+                        <p>BB84 uses the polarization of individual photons to encode binary information (0s and 1s). The security comes from the fact that measuring a photon's polarization in the wrong basis gives random results.</p>
+                        
+                        <h3>Two Measurement Bases</h3>
+                        <div class="bases-explanation">
+                            <div class="basis">
+                                <h4>➕ Rectilinear Basis (+)</h4>
+                                <p>Measures horizontal (→) and vertical (↑) polarization</p>
+                                <div class="polarization-demo">
+                                    <span class="photon horizontal">→</span>
+                                    <span class="photon vertical">↑</span>
+                                </div>
+                            </div>
+                            <div class="basis">
+                                <h4>❌ Diagonal Basis (×)</h4>
+                                <p>Measures diagonal (↗) and anti-diagonal (↘) polarization</p>
+                                <div class="polarization-demo">
+                                    <span class="photon diagonal">↗</span>
+                                    <span class="photon anti-diagonal">↘</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3>Key Properties</h3>
+                        <ul>
+                            <li>Uses single photons (quantum particles of light)</li>
+                            <li>Impossible to clone quantum states perfectly</li>
+                            <li>Measurement disturbs the quantum state</li>
+                            <li>Provides information-theoretic security</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Step 1 - Key Encoding by Alice -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">👩‍💻</span>
+                    <span class="title">Step 1: Key Encoding by Alice</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Alice's Encoding Process</h3>
+                        <p>Alice begins the protocol by preparing a sequence of photons, each encoding one bit of information. For each photon, she makes two random choices:</p>
+                        
+                        <div class="encoding-steps">
+                            <div class="step">
+                                <h4>1️⃣ Choose a Bit</h4>
+                                <p>Randomly select either 0 or 1</p>
+                                <div class="bit-choice">
+                                    <button class="bit-btn" onclick="simulateBitChoice(0)">0</button>
+                                    <button class="bit-btn" onclick="simulateBitChoice(1)">1</button>
+                                </div>
+                            </div>
+                            
+                            <div class="step">
+                                <h4>2️⃣ Choose a Basis</h4>
+                                <p>Randomly select either + or × basis</p>
+                                <div class="basis-choice">
+                                    <button class="basis-btn" onclick="simulateBasisChoice('+')">+</button>
+                                    <button class="basis-btn" onclick="simulateBasisChoice('×')">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3>Encoding Rules</h3>
+                        <div class="encoding-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Bit</th>
+                                        <th>+ Basis</th>
+                                        <th>× Basis</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>0</td>
+                                        <td><span class="photon horizontal">→</span> (Horizontal)</td>
+                                        <td><span class="photon diagonal">↗</span> (Diagonal)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1</td>
+                                        <td><span class="photon vertical">↑</span> (Vertical)</td>
+                                        <td><span class="photon anti-diagonal">↘</span> (Anti-diagonal)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h3>Interactive Example</h3>
+                        <div class="interactive-demo">
+                            <p>Click the buttons above to see Alice's choices and the resulting photon polarization:</p>
+                            <div class="demo-result">
+                                <p>Bit: <span id="demo-bit">-</span></p>
+                                <p>Basis: <span id="demo-basis">-</span></p>
+                                <p>Photon: <span id="demo-photon">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Step 2 - Transmission to Bob -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">📡</span>
+                    <span class="title">Step 2: Transmission to Bob</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Quantum Channel Transmission</h3>
+                        <p>Alice sends the polarized photons through a quantum channel (typically optical fiber or free space) to Bob. This is where the quantum magic happens!</p>
+                        
+                        <div class="transmission-visual">
+                            <div class="alice">
+                                <span class="icon">👩‍💻</span>
+                                <p>Alice</p>
+                            </div>
+                            <div class="channel">
+                                <div class="photon-stream">
+                                    <span class="photon">→</span>
+                                    <span class="photon">↑</span>
+                                    <span class="photon">↗</span>
+                                    <span class="photon">↘</span>
+                                </div>
+                                <div class="channel-label">Quantum Channel</div>
+                            </div>
+                            <div class="bob">
+                                <span class="icon">👨‍💻</span>
+                                <p>Bob</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Key Security Features</h3>
+                        <div class="security-features">
+                            <div class="feature">
+                                <h4>🚫 No-Cloning Theorem</h4>
+                                <p>It's impossible to create a perfect copy of an unknown quantum state. This means Eve cannot intercept and copy the photons without detection.</p>
+                            </div>
+                            <div class="feature">
+                                <h4>⚠️ Measurement Disturbance</h4>
+                                <p>When Eve measures a photon in the wrong basis, she disturbs the quantum state. This disturbance can be detected by Alice and Bob.</p>
+                            </div>
+                            <div class="feature">
+                                <h4>🔍 Uncertainty Principle</h4>
+                                <p>Eve cannot simultaneously know both the bit value and the basis used, making it impossible to extract information without introducing errors.</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Eavesdropper Detection</h3>
+                        <p>If Eve tries to intercept the photons:</p>
+                        <ul>
+                            <li>She must measure each photon to read the information</li>
+                            <li>If she uses the wrong basis, she gets random results</li>
+                            <li>Her measurement disturbs the photon's state</li>
+                            <li>This disturbance increases the error rate between Alice and Bob</li>
+                            <li>Higher error rates indicate potential eavesdropping</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Step 3 - Measurement by Bob -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">👨‍💻</span>
+                    <span class="title">Step 3: Measurement by Bob</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Bob's Measurement Process</h3>
+                        <p>Bob receives the photons and must measure each one to determine the encoded bit. Like Alice, he randomly chooses a measurement basis for each photon.</p>
+                        
+                        <div class="measurement-process">
+                            <div class="step">
+                                <h4>1️⃣ Receive Photon</h4>
+                                <p>Bob receives a photon from the quantum channel</p>
+                            </div>
+                            <div class="step">
+                                <h4>2️⃣ Choose Basis</h4>
+                                <p>Randomly select + or × basis for measurement</p>
+                                <div class="basis-choice">
+                                    <button class="basis-btn" onclick="simulateBobMeasurement('+')">+</button>
+                                    <button class="basis-btn" onclick="simulateBobMeasurement('×')">×</button>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <h4>3️⃣ Measure & Record</h4>
+                                <p>Record the measurement result (0 or 1)</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Measurement Outcomes</h3>
+                        <div class="measurement-outcomes">
+                            <div class="outcome">
+                                <h4>✅ Basis Match</h4>
+                                <p>When Bob's basis matches Alice's basis, he gets the correct bit with 100% accuracy.</p>
+                                <div class="example">
+                                    <p><strong>Example:</strong> Alice sends 1 in + basis (↑), Bob measures in + basis → Result: 1 ✓</p>
+                                </div>
+                            </div>
+                            <div class="outcome">
+                                <h4>❌ Basis Mismatch</h4>
+                                <p>When Bob's basis differs from Alice's, he gets a random result (50% chance of 0 or 1).</p>
+                                <div class="example">
+                                    <p><strong>Example:</strong> Alice sends 1 in + basis (↑), Bob measures in × basis → Random result: 0 or 1</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3>Interactive Measurement Simulator</h3>
+                        <div class="measurement-simulator">
+                            <p>Simulate Bob's measurement of a photon:</p>
+                            <div class="simulator-controls">
+                                <label>Alice's Bit: <input type="number" id="alice-bit" min="0" max="1" value="0"></label>
+                                <label>Alice's Basis: <select id="alice-basis">
+                                    <option value="+">+</option>
+                                    <option value="×">×</option>
+                                </select></label>
+                                <label>Bob's Basis: <select id="bob-basis">
+                                    <option value="+">+</option>
+                                    <option value="×">×</option>
+                                </select></label>
+                                <button onclick="runMeasurementSimulation()">Simulate Measurement</button>
+                            </div>
+                            <div class="simulator-result">
+                                <p>Result: <span id="measurement-result">-</span></p>
+                                <p>Accuracy: <span id="measurement-accuracy">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Step 4 - Basis Comparison -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">🔍</span>
+                    <span class="title">Step 4: Basis Comparison</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Public Basis Exchange</h3>
+                        <p>After Bob has measured all photons, Alice and Bob communicate over a public (but authenticated) classical channel to compare their basis choices. This step is crucial for key generation.</p>
+                        
+                        <div class="basis-comparison-visual">
+                            <div class="comparison-step">
+                                <h4>1️⃣ Public Communication</h4>
+                                <p>Alice and Bob announce their basis choices for each photon</p>
+                                <div class="public-channel">
+                                    <span>📢 Public Channel (Eve can listen)</span>
+                                </div>
+                            </div>
+                            <div class="comparison-step">
+                                <h4>2️⃣ Identify Matches</h4>
+                                <p>Find photons where both used the same basis</p>
+                                <div class="match-identification">
+                                    <span>✅ Basis Match</span>
+                                    <span>❌ Basis Mismatch</span>
+                                </div>
+                            </div>
+                            <div class="comparison-step">
+                                <h4>3️⃣ Form Raw Key</h4>
+                                <p>Keep only the bits from matching basis measurements</p>
+                                <div class="raw-key">
+                                    <span>🔑 Raw Key</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3>Example Basis Comparison</h3>
+                        <div class="comparison-example">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Photon #</th>
+                                        <th>Alice's Bit</th>
+                                        <th>Alice's Basis</th>
+                                        <th>Bob's Basis</th>
+                                        <th>Basis Match?</th>
+                                        <th>Keep Bit?</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="match">
+                                        <td>1</td>
+                                        <td>1</td>
+                                        <td>+</td>
+                                        <td>+</td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                    </tr>
+                                    <tr class="mismatch">
+                                        <td>2</td>
+                                        <td>0</td>
+                                        <td>×</td>
+                                        <td>+</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                    <tr class="match">
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>×</td>
+                                        <td>×</td>
+                                        <td>✅ Yes</td>
+                                        <td>✅ Yes</td>
+                                    </tr>
+                                    <tr class="mismatch">
+                                        <td>4</td>
+                                        <td>0</td>
+                                        <td>+</td>
+                                        <td>×</td>
+                                        <td>❌ No</td>
+                                        <td>❌ No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p><strong>Raw Key:</strong> 1, 1 (from photons 1 and 3)</p>
+                        </div>
+                        
+                        <h3>Key Insights</h3>
+                        <ul>
+                            <li><strong>Public Information:</strong> Basis choices are not secret and can be shared publicly</li>
+                            <li><strong>Private Information:</strong> The actual bit values remain secret</li>
+                            <li><strong>Key Length:</strong> Raw key is typically 25-50% of transmitted bits</li>
+                            <li><strong>Security:</strong> Eve learns nothing useful from basis information alone</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 7: Step 5 - Eavesdropper Detection -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">🕵️</span>
+                    <span class="title">Step 5: Eavesdropper Detection</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Detecting Eavesdropping</h3>
+                        <p>One of the most powerful features of BB84 is its ability to detect eavesdropping attempts. This is achieved through error rate analysis and privacy amplification.</p>
+                        
+                        <div class="eavesdropper-detection">
+                            <div class="detection-method">
+                                <h4>🔍 Error Rate Analysis</h4>
+                                <p>Alice and Bob compare a subset of their raw key to estimate the error rate. In the absence of eavesdropping, the error rate should be very low (typically < 2%).</p>
+                            </div>
+                            <div class="detection-method">
+                                <h4>📊 Privacy Amplification</h4>
+                                <p>If the error rate is acceptable, they apply privacy amplification techniques to distill a shorter, more secure final key.</p>
+                            </div>
+                        </div>
+                        
+                        <h3>How Eve's Interference Creates Errors</h3>
+                        <div class="eve-interference">
+                            <div class="scenario">
+                                <h4>🚫 Without Eve (Normal Operation)</h4>
+                                <ul>
+                                    <li>Alice sends photon in + basis</li>
+                                    <li>Bob measures in + basis</li>
+                                    <li>Result: Perfect correlation</li>
+                                    <li>Error rate: ~0%</li>
+                                </ul>
+                            </div>
+                            <div class="scenario">
+                                <h4>🕵️ With Eve (Eavesdropping)</h4>
+                                <ul>
+                                    <li>Alice sends photon in + basis</li>
+                                    <li>Eve intercepts and measures in × basis</li>
+                                    <li>Eve's measurement disturbs the state</li>
+                                    <li>Bob measures disturbed photon</li>
+                                    <li>Result: Increased error rate (~25%)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <h3>Interactive Eavesdropper Simulator</h3>
+                        <div class="eve-simulator">
+                            <div class="simulator-controls">
+                                <label>
+                                    <input type="checkbox" id="eve-present" onchange="toggleEveSimulation()">
+                                    Include Eve (Eavesdropper)
+                                </label>
+                                <button onclick="runEveSimulation()">Run Simulation</button>
+                            </div>
+                            <div class="simulation-results">
+                                <div class="result-metric">
+                                    <h4>Error Rate</h4>
+                                    <p><span id="error-rate">0%</span></p>
+                                </div>
+                                <div class="result-metric">
+                                    <h4>Key Length</h4>
+                                    <p><span id="key-length">100 bits</span></p>
+                                </div>
+                                <div class="result-metric">
+                                    <h4>Security Level</h4>
+                                    <p><span id="security-level">High</span></p>
+                                </div>
+                            </div>
+                            <div class="eve-detection">
+                                <p>Eve Detection: <span id="eve-detected">No eavesdropping detected</span></p>
+                            </div>
+                        </div>
+                        
+                        <h3>Security Thresholds</h3>
+                        <div class="security-thresholds">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Error Rate</th>
+                                        <th>Security Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="secure">
+                                        <td>< 2%</td>
+                                        <td>✅ Secure</td>
+                                        <td>Proceed with key generation</td>
+                                    </tr>
+                                    <tr class="warning">
+                                        <td>2% - 11%</td>
+                                        <td>⚠️ Suspicious</td>
+                                        <td>Apply privacy amplification</td>
+                                    </tr>
+                                    <tr class="insecure">
+                                        <td>> 11%</td>
+                                        <td>❌ Insecure</td>
+                                        <td>Abort protocol</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 8: Step 6 - Final Secret Key -->
+            <div class="dropdown-section">
+                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                    <span class="icon">🎯</span>
+                    <span class="title">Step 6: Final Secret Key</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content">
+                    <div class="content-inner">
+                        <h3>Key Distillation Process</h3>
+                        <p>After successful eavesdropper detection, Alice and Bob perform key distillation to convert their raw key into a final, highly secure secret key suitable for cryptographic applications.</p>
+                        
+                        <div class="key-distillation-steps">
+                            <div class="step">
+                                <h4>1️⃣ Error Correction</h4>
+                                <p>Correct any remaining bit errors in the raw key using error correction codes</p>
+                            </div>
+                            <div class="step">
+                                <h4>2️⃣ Privacy Amplification</h4>
+                                <p>Apply cryptographic hash functions to eliminate any information Eve might have gained</p>
+                            </div>
+                            <div class="step">
+                                <h4>3️⃣ Final Key Generation</h4>
+                                <p>Generate the final secret key with proven security guarantees</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Final Key Properties</h3>
+                        <div class="key-properties">
+                            <div class="property">
+                                <h4>🔒 Information-Theoretic Security</h4>
+                                <p>The final key is secure against any computational attack, regardless of Eve's computing power</p>
+                            </div>
+                            <div class="property">
+                                <h4>📏 Optimal Length</h4>
+                                <p>The key length is optimized to maximize security while maintaining efficiency</p>
+                            </div>
+                            <div class="property">
+                                <h4>🎲 Perfect Randomness</h4>
+                                <p>Each bit is truly random and unpredictable to any adversary</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Applications of the Final Key</h3>
+                        <div class="key-applications">
+                            <div class="application">
+                                <h4>🔐 One-Time Pad</h4>
+                                <p>Use the key for unbreakable encryption by XORing with plaintext</p>
+                            </div>
+                            <div class="application">
+                                <h4>🔑 Symmetric Encryption</h4>
+                                <p>Use as a key for AES or other symmetric encryption algorithms</p>
+                            </div>
+                            <div class="application">
+                                <h4>🔐 Authentication</h4>
+                                <p>Use for message authentication codes (MACs) or digital signatures</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Complete BB84 Protocol Summary</h3>
+                        <div class="protocol-summary">
+                            <div class="summary-step">
+                                <span class="step-number">1</span>
+                                <p>Alice encodes random bits using random bases</p>
+                            </div>
+                            <div class="summary-step">
+                                <span class="step-number">2</span>
+                                <p>Photons transmitted through quantum channel</p>
+                            </div>
+                            <div class="summary-step">
+                                <span class="step-number">3</span>
+                                <p>Bob measures photons using random bases</p>
+                            </div>
+                            <div class="summary-step">
+                                <span class="step-number">4</span>
+                                <p>Public basis comparison to identify matches</p>
+                            </div>
+                            <div class="summary-step">
+                                <span class="step-number">5</span>
+                                <p>Error rate analysis to detect eavesdropping</p>
+                            </div>
+                            <div class="summary-step">
+                                <span class="step-number">6</span>
+                                <p>Key distillation for final secret key</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Security Guarantees</h3>
+                        <div class="security-guarantees">
+                            <ul>
+                                <li><strong>Unconditional Security:</strong> Secure against any future computational attack</li>
+                                <li><strong>Forward Secrecy:</strong> Compromised keys don't affect past communications</li>
+                                <li><strong>Eavesdropper Detection:</strong> Any interception attempt is detected with high probability</li>
+                                <li><strong>Information-Theoretic:</strong> Security based on laws of physics, not computational assumptions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 BB84 Quantum Key Distribution Interactive Model</p>
+            <p>Educational tool for understanding quantum cryptography principles</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
