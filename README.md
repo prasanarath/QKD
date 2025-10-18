@@ -1,7 +1,7 @@
 # 🔐 Quantum Key Distribution (QKD) – BB84 Protocol Simulation
 <img width="1907" height="1029" alt="image" src="https://github.com/user-attachments/assets/a7baef9f-68cc-4414-9032-5cc78ba4564d" />
 
-<img width="1859" height="965" alt="image" src="https://github.com/user-attachments/assets/38e868fa-f095-44a2-86b7-23809bcd4cfc" />
+
 
 
 
